@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>LegDay</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: app de gestión. Barra superior + navegación lateral (horizontal en celular). Tipografía condensada de gimnasio para títulos y cifras. */
+:root{
+  --bg:#F4F3F7; --surface:#FFFFFF; --surface-2:#F9F8FB; --ink:#1C1726; --muted:#675F74; --line:#E2DFE9;
+  --accent:#D92F55; --accent-ink:#FFFFFF; --accent-soft:#FBE4EA;
+  --ok:#17784F; --ok-soft:#DFF3EA; --warn:#9A6205; --warn-soft:#FBEFD6; --bad:#B42323; --bad-soft:#FBE1E1;
+  --wa:#E1F6D9; --wa-ink:#173B22;
+  --f-display:"Barlow Condensed","Arial Narrow",Impact,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#110F15; --surface:#1A171F; --surface-2:#211D27; --ink:#F1EEF5; --muted:#A69FB2; --line:#2E2936;
+  --accent:#FF5779; --accent-ink:#1A0A10; --accent-soft:#3A1622;
+  --ok:#5BD39E; --ok-soft:#14301F; --warn:#F2B857; --warn-soft:#33270E; --bad:#FF7B7B; --bad-soft:#3A1717;
+  --wa:#1C3424; --wa-ink:#D7F2DE; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#110F15; --surface:#1A171F; --surface-2:#211D27; --ink:#F1EEF5; --muted:#A69FB2; --line:#2E2936;
+  --accent:#FF5779; --accent-ink:#1A0A10; --accent-soft:#3A1622;
+  --ok:#5BD39E; --ok-soft:#14301F; --warn:#F2B857; --warn-soft:#33270E; --bad:#FF7B7B; --bad-soft:#3A1717;
+  --wa:#1C3424; --wa-ink:#D7F2DE; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.02em;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:2.1rem;font-weight:800}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.label{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:.82rem;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* brand */
+.brand{font-family:var(--f-display);font-weight:800;font-size:1.6rem;letter-spacing:.02em;display:flex;align-items:baseline;gap:0;text-transform:uppercase}
+.brand b{color:var(--accent);font-weight:800}
+.brand i{display:inline-block;width:.35em;height:.8em;background:var(--accent);transform:skewX(-18deg);margin:0 .12em}
+
+/* buttons & inputs */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.55rem .9rem;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink)}
+.btn.sm{padding:.3rem .6rem;font-size:.85rem}
+.btn.icon{padding:.25rem .55rem;color:var(--muted)}
+.btn.icon:hover{color:var(--bad);border-color:var(--bad)}
+.input,select.input,textarea.input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.5rem .65rem;min-width:0}
+textarea.input{resize:vertical;min-height:4.2rem}
+.field{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.field>span{font-size:.8rem;font-weight:600;color:var(--muted)}
+.grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;align-items:end}
+.check{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--surface);font-size:.88rem}
+.check input{accent-color:var(--accent)}
+.checks{display:flex;flex-wrap:wrap;gap:.45rem}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:.35rem;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.new{background:var(--accent-soft);color:var(--accent)}
+
+/* login */
+.login-wrap{min-height:100%;display:grid;place-items:center;padding-block:2rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.login{width:100%;max-width:420px;display:flex;flex-direction:column;gap:1.4rem}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.4rem;display:flex;flex-direction:column;gap:1rem}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;padding:.55rem;border-radius:7px;cursor:pointer;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.demo-note{font-size:.82rem;color:var(--muted);border-left:3px solid var(--accent);padding:.2rem 0 .2rem .7rem}
+.demo-note code{font-family:ui-monospace,Menlo,monospace;background:var(--surface-2);padding:0 .3rem;border-radius:4px;color:var(--ink)}
+.err{color:var(--bad);font-size:.88rem;font-weight:500}
+
+/* shell */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.65rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.who{display:flex;align-items:center;gap:.6rem;font-size:.88rem;color:var(--muted);min-width:0}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);max-width:1280px;margin:0 auto}
+.side{display:flex;flex-direction:column;gap:2px;padding:1.2rem .8rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);align-self:start}
+.side button{text-align:left;border:0;background:transparent;padding:.6rem .8rem;border-radius:8px;cursor:pointer;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.side button:hover{background:var(--surface);color:var(--ink)}
+.side button[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.side .count{background:var(--accent);color:var(--accent-ink);font-size:.72rem;border-radius:999px;padding:0 .45rem;font-variant-numeric:tabular-nums}
+.main{padding-block:1.4rem 3rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:1.2rem;min-width:0}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.page-head p{margin-top:.3rem}
+@media (max-width:820px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .side{flex-direction:row;overflow-x:auto;position:static;padding:.6rem max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+  .side button{white-space:nowrap}
+  .side button[aria-current="page"]{box-shadow:inset 0 -3px 0 var(--accent);background:var(--surface-2)}
+}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1.1rem;display:flex;flex-direction:column;gap:.9rem;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem;align-items:start}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.2rem}
+.kpi .v{font-family:var(--f-display);font-size:2.1rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:.8rem;color:var(--muted)}
+.list{display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.65rem 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.row:first-child{border-top:0}
+.row .t{font-weight:600}
+.empty{color:var(--muted);font-size:.9rem;padding:.4rem 0}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;margin:0 -.2rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.07em;font-size:.78rem;color:var(--muted);font-weight:700;padding:.5rem .5rem;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:.55rem .5rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.edit-tbl td{padding:.35rem .3rem}
+.edit-tbl .input{padding:.4rem .5rem}
+.edit-tbl .w-s{width:70px}
+.edit-tbl .w-m{width:95px}
+
+/* tabs */
+.tabs{display:flex;gap:.35rem;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.4rem .8rem;cursor:pointer;font-weight:600;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* calendar */
+.week{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:.6rem;overflow-x:auto;padding-bottom:.3rem}
+.day{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:.6rem;display:flex;flex-direction:column;gap:.5rem;min-height:150px}
+.day.today{border-color:var(--accent)}
+.day-h{display:flex;justify-content:space-between;align-items:baseline}
+.slot{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.5rem .55rem;display:flex;flex-direction:column;gap:.15rem;position:relative}
+.slot .tm{font-family:var(--f-display);font-weight:700;font-size:1.05rem;font-variant-numeric:tabular-nums;color:var(--accent)}
+.slot .ti{font-weight:600;font-size:.88rem;line-height:1.3}
+.slot .wh{font-size:.76rem;color:var(--muted)}
+.slot .x{position:absolute;top:.3rem;right:.3rem;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:.15rem .3rem;border-radius:4px}
+.slot .x:hover{color:var(--bad);background:var(--bad-soft)}
+
+/* meals */
+.meal{display:grid;grid-template-columns:150px 90px minmax(0,1fr) auto;gap:.6rem;align-items:start;padding:.7rem 0;border-top:1px solid var(--line)}
+.meal:first-child{border-top:0}
+@media (max-width:640px){.meal{grid-template-columns:1fr 90px auto}.meal textarea{grid-column:1 / -1}}
+
+/* whatsapp log */
+.wa-log{display:flex;flex-direction:column;gap:.6rem}
+.wa{background:var(--wa);color:var(--wa-ink);border-radius:10px 10px 10px 2px;padding:.6rem .75rem;max-width:560px;display:flex;flex-direction:column;gap:.25rem}
+.wa .meta{display:flex;justify-content:space-between;gap:.8rem;font-size:.74rem;opacity:.75;flex-wrap:wrap}
+.wa .txt{white-space:pre-wrap;font-size:.9rem}
+.tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+
+/* chart */
+.chart text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.chart .bar{fill:var(--accent-soft)}
+.chart .bar.cur{fill:var(--accent)}
+.chart .val{fill:var(--ink);font-weight:600}
+.chart .grid{stroke:var(--line);stroke-width:1}
+
+/* student */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.3rem;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.2rem;align-items:center}
+@media (max-width:700px){.hero{grid-template-columns:minmax(0,1fr)}}
+.pdf-box{display:flex;flex-direction:column;gap:.5rem;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.pdf-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.daycard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.daycard-h{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;padding:.8rem 1rem;background:var(--surface-2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ex{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.2rem .8rem;padding:.65rem 1rem;border-top:1px solid var(--line)}
+.ex:first-of-type{border-top:0}
+.ex .n{font-weight:600}
+.ex .sr{font-family:var(--f-display);font-weight:700;font-size:1.1rem;font-variant-numeric:tabular-nums;color:var(--accent)}
+.ex .nt{grid-column:1 / -1;font-size:.82rem;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:1rem}
+
+.toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.7rem 1.1rem;border-radius:10px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:20;max-width:calc(100% - 32px);font-size:.9rem}
+/* biblioteca de ejercicios */
+.search-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.search-row .input{max-width:320px}
+.chips{display:flex;gap:.35rem;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:.3rem .75rem;cursor:pointer;font-weight:600;font-size:.85rem;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.9rem}
+.ex-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;font:inherit;color:inherit}
+.ex-card:hover{border-color:var(--accent)}
+.ex-card .thumb{aspect-ratio:1/1;background:var(--surface-2);display:grid;place-items:center;border-bottom:1px solid var(--line);max-width:100%}
+.ex-card .thumb canvas,.ex-card .thumb video,.ex-card .thumb img{width:100%;height:100%;object-fit:contain;display:block}
+.ex-card .body{padding:.65rem .75rem .8rem;display:flex;flex-direction:column;gap:.3rem}
+.ex-card .nm{font-weight:600;line-height:1.3}
+.zone{display:inline-block;font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.74rem;color:var(--accent)}
+.pending{font-size:.78rem;color:var(--muted);padding:1rem;text-align:center}
+.modal-bg{position:fixed;inset:0;background:rgba(10,8,14,.55);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:820px;max-height:100%;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
+@media (max-width:700px){.modal{grid-template-columns:minmax(0,1fr)}}
+.modal .stage{background:var(--surface-2);display:flex;flex-direction:column;gap:.5rem;padding:1rem;border-right:1px solid var(--line)}
+.modal .stage .anim{aspect-ratio:1/1;width:100%;display:grid;place-items:center}
+.modal .stage canvas,.modal .stage video,.modal .stage img{width:100%;height:100%;object-fit:contain;display:block}
+.modal .info{padding:1.2rem;display:flex;flex-direction:column;gap:1rem;min-width:0}
+.steps{margin:0;padding-left:1.3rem;display:flex;flex-direction:column;gap:.45rem}
+.steps li::marker{font-family:var(--f-display);font-weight:700;color:var(--accent)}
+.mistakes{margin:0;padding-left:1.1rem;display:flex;flex-direction:column;gap:.3rem;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem}
+.fact{background:var(--surface-2);border-radius:8px;padding:.5rem .65rem;display:flex;flex-direction:column;gap:.1rem}
+.fact b{font-weight:600}
+.media-prev{width:140px;aspect-ratio:1/1;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:grid;place-items:center}
+.media-prev canvas,.media-prev video,.media-prev img{width:100%;height:100%;object-fit:contain}
+.link-btn{border:0;background:transparent;color:var(--accent);font-weight:600;cursor:pointer;padding:0;font-size:.82rem;text-decoration:underline;text-underline-offset:2px}
+.banner{font-size:.82rem;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:.5rem .8rem}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .25s ease-out}@keyframes up{from{transform:translate(-50%,10px);opacity:0}}}
+</style>
+
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ===================== Utilidades ===================== */
+const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MONTHS_L=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+// Feriados nacionales (no cuentan como días hábiles). En la versión final se cargan desde la configuración.
+const HOLIDAYS=new Set(['2026-12-08','2026-12-25','2027-01-01']);
+const ZONES=['Glúteos','Cuádriceps','Femorales','Aductores y abductores','Espalda','Hombros','Pecho','Brazos','Core'];
+const LEVELS=['Principiante','Intermedio','Avanzado'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const todayISO=()=>iso(new Date());
+const money=n=>'$ '+Math.round(n).toLocaleString('es-AR');
+const fmtDate=s=>{const d=parse(s);return `${d.getDate()} ${MONTHS[d.getMonth()]}`};
+const fmtDateLong=s=>{const d=parse(s);const wd=['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()];return `${wd} ${d.getDate()} ${MONTHS[d.getMonth()]}`};
+const isBusiness=d=>d.getDay()!==0&&d.getDay()!==6&&!HOLIDAYS.has(iso(d));
+function subBusinessDays(s,n){const d=parse(s);while(n>0){d.setDate(d.getDate()-1);if(isBusiness(d))n--;}return iso(d)}
+const reminderDate=due=>subBusinessDays(due,2);
+function addMonth(s){const d=parse(s);const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return iso(d)}
+const monthKey=s=>s.slice(0,7);
+const monthLabel=k=>{const [y,m]=k.split('-');return `${MONTHS_L[+m-1]} ${y}`};
+const nowStamp=()=>{const d=new Date();return `${iso(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const first=n=>n.split(' ')[0];
+const todayDayName=()=>{const g=new Date().getDay();return g===0?null:DAYS[g-1]};
+const daysSince=s=>s?Math.floor((new Date()-parse(s.slice(0,10)))/864e5):999;
+
+/* ===================== Biblioteca de ejercicios (ejemplo) ===================== */
+function seedExercises(){
+  const E=(id,name,zone,muscles,equipment,level,anim,steps,mistakes)=>({id,name,zone,muscles,equipment,level,anim,media:null,steps,mistakes});
+  return [
+    E('e1','Hip thrust con barra','Glúteos','Glúteo mayor, femorales','Barra, banco','Intermedio','hipthrust',
+      ['Apoyá la parte baja de los omóplatos en el borde del banco.','Pies al ancho de cadera, rodillas a 90° en la posición alta.','Barra sobre la cadera, con almohadilla.','Empujá con los talones hasta alinear rodillas, cadera y hombros.','Apretá glúteos 2 segundos arriba y bajá controlando.'],
+      ['Arquear la zona lumbar al subir.','Empujar con la punta de los pies.','Mirar al techo: la vista va hacia adelante, mentón adentro.']),
+    E('e2','Peso muerto rumano','Femorales','Femorales, glúteos, erectores','Barra o mancuernas','Intermedio','rdl',
+      ['Parada, pies al ancho de cadera, barra pegada a los muslos.','Rodillas apenas flexionadas y fijas.','Llevá la cadera hacia atrás bajando la barra pegada a las piernas.','Bajá hasta sentir el estiramiento en femorales (media tibia).','Volvé empujando la cadera hacia adelante.'],
+      ['Redondear la espalda.','Flexionar las rodillas como en una sentadilla.','Alejar la barra del cuerpo.']),
+    E('e3','Sentadilla búlgara','Glúteos','Glúteos, cuádriceps','Banco, mancuernas','Intermedio','bulgara',
+      ['Empeine del pie de atrás apoyado en el banco.','Pie de adelante a un paso largo del banco.','Bajá en vertical hasta que el muslo de adelante quede paralelo al piso.','Subí empujando con el talón de adelante.'],
+      ['Pie delantero demasiado cerca del banco.','Rodilla que se va hacia adentro.','Torso que cae hacia adelante sin control.']),
+    E('e4','Abducción en máquina','Aductores y abductores','Glúteo medio y menor','Máquina de abductores','Principiante',null,
+      ['Sentate con la espalda apoyada y las piernas juntas.','Abrí las piernas de forma controlada.','Sostené 1 segundo afuera y volvé lento.'],
+      ['Usar envión.','Despegar la espalda del respaldo.']),
+    E('e5','Sentadilla libre','Cuádriceps','Cuádriceps, glúteos, core','Barra, rack','Intermedio','sentadilla',
+      ['Barra apoyada sobre los trapecios, manos un poco más anchas que los hombros.','Pies al ancho de hombros, puntas levemente hacia afuera.','Inhalá, apretá el abdomen y bajá llevando la cadera atrás y abajo.','Rodillas en la dirección de las puntas de los pies.','Bajá hasta muslos paralelos o un poco más y subí empujando el piso.'],
+      ['Levantar los talones.','Rodillas hacia adentro al subir.','Redondear la espalda abajo.']),
+    E('e6','Prensa 45°','Cuádriceps','Cuádriceps, glúteos','Máquina de prensa','Principiante',null,
+      ['Espalda y cadera bien apoyadas en el respaldo.','Pies al ancho de cadera en el centro de la plataforma.','Bajá hasta formar 90° en las rodillas.','Empujá sin bloquear las rodillas arriba.'],
+      ['Despegar la cadera del asiento al bajar.','Bloquear las rodillas.']),
+    E('e7','Sillón de cuádriceps','Cuádriceps','Cuádriceps','Máquina de extensiones','Principiante',null,
+      ['Rodilla alineada con el eje de la máquina.','Extendé las piernas por completo.','Pausa arriba y bajá en 2-3 segundos.'],
+      ['Balancear el cuerpo.','Bajar de golpe.']),
+    E('e8','Estocadas caminando','Glúteos','Glúteos, cuádriceps','Mancuernas','Principiante','estocada',
+      ['Parada con una mancuerna en cada mano.','Da un paso largo hacia adelante.','Bajá hasta que la rodilla de atrás casi toque el piso.','Empujá con el talón de adelante y avanzá con la otra pierna.'],
+      ['Pasos cortos que cargan la rodilla.','Torso inclinado hacia adelante.']),
+    E('e9','Jalón al pecho','Espalda','Dorsales, bíceps','Polea alta','Principiante',null,
+      ['Agarre un poco más ancho que los hombros.','Pecho arriba y leve inclinación hacia atrás.','Llevá la barra hasta el pecho bajando los codos.','Volvé estirando los brazos de forma controlada.'],
+      ['Tirar con los brazos sin bajar los hombros.','Llevar la barra detrás de la nuca.']),
+    E('e10','Remo con mancuerna','Espalda','Dorsales, romboides, bíceps','Mancuerna','Principiante','remo',
+      ['Inclinate desde la cadera con la espalda recta.','Brazo estirado con la mancuerna colgando.','Llevá el codo hacia atrás, pegado al cuerpo.','Bajá lento hasta estirar el brazo.'],
+      ['Girar el torso para subir más peso.','Encoger el hombro hacia la oreja.']),
+    E('e11','Press militar con mancuernas','Hombros','Deltoides, tríceps','Mancuernas','Intermedio','press',
+      ['Mancuernas a la altura de los hombros, palmas hacia adelante.','Abdomen y glúteos firmes.','Empujá hacia arriba hasta estirar los brazos.','Bajá controlando hasta la altura de las orejas.'],
+      ['Arquear la espalda.','Bajar demasiado rápido.']),
+    E('e12','Plancha frontal','Core','Recto abdominal, transverso','Colchoneta','Principiante','plancha',
+      ['Antebrazos en el piso, codos debajo de los hombros.','Cuerpo en línea recta de cabeza a talones.','Apretá abdomen y glúteos.','Respirá normal y sostené el tiempo indicado.'],
+      ['Cadera caída.','Cola muy alta.','Contener la respiración.']),
+  ];
+}
+
+/* ===================== Datos de ejemplo ===================== */
+function seed(){
+  const t=todayISO();
+  const rel=n=>{const d=parse(t);d.setDate(d.getDate()+n);return iso(d)};
+  const base={days:[
+    {day:'Lunes',focus:'Glúteos y femorales',exercises:[
+      {name:'Hip thrust con barra',sets:'4',reps:'10',rest:'90 s',notes:'Pausa de 2 s arriba'},
+      {name:'Peso muerto rumano',sets:'4',reps:'10',rest:'90 s',notes:'Espalda neutra, bajar hasta media tibia'},
+      {name:'Sentadilla búlgara',sets:'3',reps:'12 c/p',rest:'60 s',notes:''},
+      {name:'Abducción en máquina',sets:'3',reps:'15',rest:'45 s',notes:'Última serie al fallo'}]},
+    {day:'Miércoles',focus:'Cuádriceps',exercises:[
+      {name:'Sentadilla libre',sets:'4',reps:'8',rest:'2 min',notes:'Subir carga si llegás cómoda a 8'},
+      {name:'Prensa 45°',sets:'4',reps:'12',rest:'90 s',notes:''},
+      {name:'Sillón de cuádriceps',sets:'3',reps:'15',rest:'45 s',notes:''},
+      {name:'Estocadas caminando',sets:'3',reps:'20 pasos',rest:'60 s',notes:'Con mancuernas'}]},
+    {day:'Viernes',focus:'Tren superior y core',exercises:[
+      {name:'Jalón al pecho',sets:'4',reps:'10',rest:'60 s',notes:''},
+      {name:'Remo con mancuerna',sets:'3',reps:'12 c/b',rest:'60 s',notes:''},
+      {name:'Press militar con mancuernas',sets:'3',reps:'10',rest:'60 s',notes:''},
+      {name:'Plancha frontal',sets:'3',reps:'40 s',rest:'30 s',notes:''}]}]};
+  const diet={kcal:'1900',protein:'120',notes:'2,5 litros de agua por día. Evitar ultraprocesados y bebidas azucaradas.',meals:[
+    {name:'Desayuno',time:'08:00',items:'Avena 50 g con leche descremada, 1 banana, café o mate'},
+    {name:'Almuerzo',time:'13:00',items:'150 g de pollo a la plancha, 1 taza de arroz integral, ensalada verde con aceite de oliva'},
+    {name:'Merienda',time:'17:00',items:'Yogur griego 170 g con 30 g de granola sin azúcar'},
+    {name:'Cena',time:'21:00',items:'150 g de merluza, calabaza al horno, brócoli al vapor'}]};
+  const S=[
+    ['s1','Sofía Martínez','sofia','+54 9 11 5523-8841','Personalizado 3x semana',38000,rel(2)],
+    ['s2','Valentina Ruiz','valentina','+54 9 11 4410-2276','Personalizado 2x semana',32000,rel(-1)],
+    ['s3','Camila Gómez','camila','+54 9 11 6687-1093','Grupal 3x semana',26000,rel(14)],
+    ['s4','Lucía Fernández','lucia','+54 9 11 3359-7720','Grupal 3x semana',26000,rel(5)],
+    ['s5','Martina López','martina','+54 9 11 2245-6618','Online (rutina + dieta)',18000,rel(24)]];
+  const students=S.map(([id,name,user,phone,plan,fee,nextDue])=>({id,name,user,pass:'legday123',phone,plan,fee,nextDue,active:true,reminderSentFor:null,updated:{rutina:rel(-6)+' 10:15',dieta:rel(-12)+' 18:40',calendario:rel(-20)+' 09:00'}}));
+  const routines={},diets={};
+  students.forEach(s=>{routines[s.id]=clone(base);diets[s.id]=clone(diet)});
+  routines.s3.days[1].exercises[0].notes='Arrancar con barra sola, técnica primero';
+  diets.s5.kcal='1700';
+  // Pagos de los últimos 6 meses
+  const payments=[];let pid=1;const now=parse(t);
+  for(let k=5;k>=0;k--){
+    const d=new Date(now.getFullYear(),now.getMonth()-k,1);
+    students.forEach((s,i)=>{
+      if(k===0&&(s.id==='s1'||s.id==='s2'||s.id==='s4'))return; // pendientes del mes actual
+      if(k>3&&s.id==='s5')return; // se sumó hace 4 meses
+      const day=Math.min(5+i*3,28);
+      payments.push({id:'p'+(pid++),studentId:s.id,amount:k>2?Math.round(s.fee*0.9/1000)*1000:s.fee,date:iso(new Date(d.getFullYear(),d.getMonth(),day)),method:['Transferencia','Efectivo','Mercado Pago'][i%3]});
+    });
+  }
+  const slots=[
+    {id:'c1',day:'Lunes',start:'08:00',end:'09:00',title:'Funcional grupal',all:true,students:[]},
+    {id:'c2',day:'Lunes',start:'18:00',end:'19:00',title:'Personalizado',all:false,students:['s1']},
+    {id:'c3',day:'Miércoles',start:'08:00',end:'09:00',title:'Glúteos grupal',all:true,students:[]},
+    {id:'c4',day:'Miércoles',start:'19:00',end:'20:00',title:'Personalizado',all:false,students:['s2']},
+    {id:'c5',day:'Jueves',start:'18:00',end:'19:00',title:'Personalizado',all:false,students:['s1']},
+    {id:'c6',day:'Viernes',start:'08:00',end:'09:00',title:'Funcional grupal',all:true,students:[]},
+    {id:'c7',day:'Viernes',start:'19:00',end:'20:00',title:'Personalizado',all:false,students:['s2']},
+    {id:'c8',day:'Sábado',start:'10:00',end:'11:30',title:'Clase al aire libre',all:false,students:['s3','s4','s5']}];
+  const messages=[
+    {ts:rel(-6)+' 10:15',studentId:'s1',type:'actualización',text:'Hola Sofía! 💪 Tu rutina en LegDay fue actualizada. Entrá a legday.com.ar para verla.'},
+    {ts:rel(-3)+' 09:00',studentId:'s2',type:'vencimiento',text:'Hola Valentina! Te recordamos que tu cuota de LegDay ($ 32.000) vence el '+fmtDateLong(rel(-1))+'. ¡Gracias!'}];
+  return {v:2,exercises:seedExercises(),admin:{user:'entrenadora',pass:'legday2026',name:'Entrenadora LegDay',phone:'+54 9 11 0000-0000'},students,routines,diets,slots,payments,messages,seq:100};
+}
+
+/* ===================== Estado ===================== */
+const KEY='legday-demo-v1';
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(state&&state.v===1){state.exercises=seedExercises();state.v=2}
+if(!state||state.v!==2)state=seed();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const nid=p=>p+(++state.seq);
+let session=null;
+const ui={exZone:'',exQuery:'',exEdit:null,exNew:false,exMedia:undefined,view:'inicio',sview:'semana',loginRole:'alumna',loginErr:'',rStudent:'s1',rDay:0,rdraft:null,dStudent:'s1',ddraft:null,gMonth:monthKey(todayISO()),editing:null,showNew:false};
+const stu=id=>state.students.find(s=>s.id===id);
+const active=()=>state.students.filter(s=>s.active);
+
+function status(s){
+  const t=todayISO();
+  if(t>s.nextDue)return{k:'bad',t:'Vencida'};
+  if(t>=reminderDate(s.nextDue))return{k:'warn',t:'Por vencer'};
+  return{k:'ok',t:'Al día'};
+}
+const pill=(k,t)=>`<span class="pill ${k}">${esc(t)}</span>`;
+
+/* ===================== WhatsApp (simulado) ===================== */
+const KIND_LABEL={rutina:'rutina',dieta:'dieta',calendario:'agenda semanal'};
+function sendWA(studentId,type,text){state.messages.unshift({ts:nowStamp(),studentId,type,text})}
+function notifyUpdate(ids,kind){
+  const ts=nowStamp();
+  ids.forEach(id=>{const s=stu(id);if(!s)return;s.updated[kind]=ts;
+    const word=kind==='calendario'?'Tu agenda semanal':kind==='dieta'?'Tu dieta':'Tu rutina';
+    sendWA(id,'actualización',`Hola ${first(s.name)}! 💪 ${word} en LegDay fue actualizada. Entrá a legday.com.ar para verla.`)});
+}
+function runReminders(){
+  const t=todayISO();let n=0;
+  active().forEach(s=>{const r=reminderDate(s.nextDue);
+    if(t>=r&&t<=s.nextDue&&s.reminderSentFor!==s.nextDue){
+      sendWA(s.id,'vencimiento',`Hola ${first(s.name)}! Te recordamos que tu cuota de LegDay (${money(s.fee)}) vence el ${fmtDateLong(s.nextDue)}. Podés abonar por transferencia o en efectivo. ¡Gracias!`);
+      s.reminderSentFor=s.nextDue;n++;}});
+  if(n)save();return n;
+}
+const autoSent=runReminders();
+
+/* ===================== Descargas (PDF / CSV) ===================== */
+let downloadsNS=null;
+if(window.claude&&typeof window.claude.use==='function'){window.claude.use('downloads').then(x=>{downloadsNS=x}).catch(()=>{})}
+async function offerFile(filename,data){
+  if(!window.claude){ // fuera de claude.ai (por ejemplo, Live Preview de VS Code): descarga directa
+    const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type:'text/csv'}));
+    const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);toast('Archivo descargado: '+filename);return}
+  if(!downloadsNS){toast('La descarga no está disponible en esta vista del prototipo. En la web final se descarga directo.');return}
+  try{await downloadsNS.save({filename,data});toast('Archivo descargado: '+filename)}
+  catch(e){if(e&&e.code==='declined')return;if(e&&e.code==='rate_limited'){toast('Esperá un momento y probá de nuevo.');return}toast('No se pudo descargar el archivo.')}
+}
+function buildPdf(s,which){
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});
+  const A=[217,47,85],INK=[28,23,38],MU=[103,95,116];let y=0;let page=1;
+  const footer=()=>{doc.setFontSize(8);doc.setTextColor(...MU);doc.setFont('helvetica','normal');doc.text(`LegDay · Entrenamiento personalizado · página ${page}`,15,290)};
+  const ensure=h=>{if(y+h>280){footer();doc.addPage();page++;y=20}};
+  const label=which==='ambos'?'Rutina + dieta':which==='rutina'?'Rutina':'Dieta';
+  doc.setFillColor(...A);doc.rect(0,0,210,30,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(24);doc.text('LEGDAY',15,16);
+  doc.setFontSize(11);doc.text(label.toUpperCase(),195,14,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(`${s.name} · ${s.plan}`,15,24);
+  doc.text('Generado el '+fmtDateLong(todayISO()),195,24,{align:'right'});
+  y=42;
+  const section=t=>{ensure(14);doc.setTextColor(...A);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(t.toUpperCase(),15,y);doc.setDrawColor(...A);doc.setLineWidth(.5);doc.line(15,y+2,195,y+2);y+=10};
+  if(which!=='dieta'){
+    section('Rutina semanal');
+    const r=state.routines[s.id];const X=[15,92,110,130,150];
+    r.days.forEach(d=>{
+      ensure(18);doc.setTextColor(...INK);doc.setFont('helvetica','bold');doc.setFontSize(11.5);doc.text(`${d.day}${d.focus?'  ·  '+d.focus:''}`,15,y);y+=5;
+      doc.setFillColor(244,243,247);doc.rect(15,y-3.6,180,6,'F');doc.setFontSize(8);doc.setTextColor(...MU);
+      ['EJERCICIO','SERIES','REPS','DESCANSO','NOTAS'].forEach((h,i)=>doc.text(h,X[i]+1,y));y+=6;
+      d.exercises.forEach(e=>{
+        doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...INK);
+        const nm=doc.splitTextToSize(e.name||'',75),nt=doc.splitTextToSize(e.notes||'',44);
+        const h=Math.max(nm.length,nt.length,1)*4.3+1.5;ensure(h);
+        doc.text(nm,X[0]+1,y);doc.text(String(e.sets||''),X[1]+1,y);doc.text(String(e.reps||''),X[2]+1,y);doc.text(String(e.rest||''),X[3]+1,y);
+        doc.setTextColor(...MU);doc.setFontSize(8.5);doc.text(nt,X[4]+1,y);
+        y+=h;doc.setDrawColor(226,223,233);doc.setLineWidth(.2);doc.line(15,y-3,195,y-3);
+      });y+=5;
+    });
+  }
+  if(which!=='rutina'){
+    if(which==='ambos')y+=2;
+    section('Plan de alimentación');
+    const di=state.diets[s.id];
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...INK);
+    doc.text(`Objetivo diario: ${di.kcal||'—'} kcal  ·  Proteína: ${di.protein||'—'} g`,15,y);y+=8;
+    di.meals.forEach(m=>{
+      const lines=doc.splitTextToSize(m.items||'',150);ensure(lines.length*4.6+9);
+      doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...A);doc.text(m.time||'',15,y);
+      doc.setTextColor(...INK);doc.text(m.name||'',33,y);y+=5;
+      doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.text(lines,33,y);y+=lines.length*4.6+4;
+    });
+    if(di.notes){const l=doc.splitTextToSize(di.notes,176);ensure(l.length*4.6+10);y+=2;doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...MU);doc.text('INDICACIONES',15,y);y+=5;doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...INK);doc.text(l,15,y);y+=l.length*4.6}
+  }
+  footer();
+  return doc.output('blob');
+}
+async function downloadPdf(which){
+  const s=stu(session.id);
+  if(!window.jspdf){toast('No se pudo cargar el generador de PDF. Revisá tu conexión.');return}
+  const slug=s.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-');
+  await offerFile(`LegDay-${slug}-${which==='ambos'?'rutina-y-dieta':which}.pdf`,buildPdf(s,which));
+}
+
+/* ===================== Toast ===================== */
+let toastT;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,3800)}
+
+/* ===================== Animaciones de ejemplo (figuras) ===================== */
+// Vista lateral. Cada ejercicio tiene dos posiciones (A y B) y la figura se mueve entre ellas.
+// En la web final, la entrenadora sube su propia animación (MP4, WebM, GIF o WebP) y reemplaza a estas.
+const STAND={p:[100,118],k:[103,158],a:[100,198],t:[118,198]};
+const POSES={
+  sentadilla:{label:'Sentadilla',bar:'n',
+    A:{h:[101,52],n:[100,68],e:[88,80],w:[97,66],p:[100,118],k:[103,158],a:[100,198],t:[118,198]},
+    B:{h:[118,95],n:[110,110],e:[98,122],w:[107,108],p:[86,158],k:[126,162],a:[100,198],t:[118,198]}},
+  hipthrust:{label:'Hip thrust',bench:[24,140,50,14],plate:'p',
+    A:{h:[56,128],n:[70,136],e:[86,152],w:[103,162],p:[105,170],k:[146,160],a:[152,198],t:[168,198]},
+    B:{h:[56,128],n:[70,136],e:[92,134],w:[114,130],p:[116,140],k:[152,150],a:[154,198],t:[170,198]}},
+  rdl:{label:'Peso muerto rumano',bar:'w',
+    A:{h:[101,52],n:[100,68],e:[101,94],w:[102,118],p:[99,118],k:[103,158],a:[100,198],t:[118,198]},
+    B:{h:[144,92],n:[132,100],e:[133,126],w:[134,150],p:[82,122],k:[108,160],a:[100,198],t:[118,198]}},
+  estocada:{label:'Estocada',db:'w',
+    A:{h:[96,62],n:[96,78],e:[98,104],w:[100,126],p:[95,126],k:[118,162],a:[130,198],t:[148,198],k2:[78,162],a2:[62,196],t2:[50,200]},
+    B:{h:[96,90],n:[96,106],e:[98,132],w:[100,154],p:[95,154],k:[133,158],a:[130,198],t:[148,198],k2:[88,192],a2:[56,196],t2:[46,200]}},
+  bulgara:{label:'Sentadilla búlgara',db:'w',bench:[22,166,46,14],
+    A:{h:[100,60],n:[100,76],e:[102,102],w:[104,124],p:[99,124],k:[122,160],a:[134,198],t:[152,198],k2:[78,156],a2:[50,163],t2:[40,166]},
+    B:{h:[100,88],n:[100,104],e:[102,130],w:[104,152],p:[99,152],k:[137,156],a:[134,198],t:[152,198],k2:[86,188],a2:[50,163],t2:[40,166]}},
+  plancha:{label:'Plancha',
+    A:{h:[34,150],n:[48,158],e:[52,196],w:[76,196],p:[100,170],k:[136,180],a:[170,190],t:[176,198]},
+    B:{h:[34,149],n:[48,157],e:[52,196],w:[76,196],p:[100,166],k:[136,178],a:[170,190],t:[176,198]}},
+  press:{label:'Press de hombros',db:'w',
+    A:{h:[101,52],n:[100,68],e:[110,88],w:[106,64],...STAND},
+    B:{h:[101,52],n:[100,68],e:[104,44],w:[103,20],...STAND}},
+  remo:{label:'Remo',db:'w',
+    A:{h:[144,92],n:[132,100],e:[133,124],w:[134,148],p:[82,122],k:[108,160],a:[100,198],t:[118,198]},
+    B:{h:[144,92],n:[132,100],e:[114,114],w:[124,132],p:[82,122],k:[108,160],a:[100,198],t:[118,198]}},
+};
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888';
+function prepCanvas(c){const r=c.getBoundingClientRect();const size=Math.max(80,Math.round(r.width||220));const dpr=window.devicePixelRatio||1;
+  if(c.width!==size*dpr){c.width=size*dpr;c.height=size*dpr}const ctx=c.getContext('2d');ctx.setTransform(size*dpr/220,0,0,size*dpr/220,0,0);return ctx}
+function drawFigure(c,key,t){
+  const P=POSES[key];if(!P)return;const ctx=prepCanvas(c);
+  const ink=tok('--ink'),mu=tok('--muted'),ac=tok('--accent'),ln=tok('--line');
+  const pt=n=>{const a=P.A[n],b=P.B[n]||a;if(!a)return null;return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]};
+  const path=(names,color,w)=>{const ps=names.map(pt).filter(Boolean);if(ps.length<2)return;ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(...ps[0]);ps.slice(1).forEach(q=>ctx.lineTo(...q));ctx.stroke()};
+  ctx.clearRect(0,0,220,220);
+  ctx.strokeStyle=ln;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,201);ctx.lineTo(212,201);ctx.stroke();
+  if(P.bench){const[x,y,w,h]=P.bench;ctx.fillStyle=ln;ctx.fillRect(x,y,w,h);ctx.fillRect(x+6,y+h,5,201-y-h);ctx.fillRect(x+w-11,y+h,5,201-y-h)}
+  if(P.A.k2)path(['p','k2','a2','t2'],mu,7);
+  path(['p','k','a','t'],ink,8);path(['n','p'],ink,9);path(['n','e','w'],ink,6);
+  const h=pt('h');ctx.fillStyle=ink;ctx.beginPath();ctx.arc(h[0],h[1],11,0,Math.PI*2);ctx.fill();
+  if(P.bar){const b=pt(P.bar);ctx.fillStyle=ac;ctx.beginPath();ctx.arc(b[0],b[1],13,0,Math.PI*2);ctx.fill();ctx.fillStyle=tok('--surface');ctx.beginPath();ctx.arc(b[0],b[1],3,0,Math.PI*2);ctx.fill()}
+  if(P.plate){const b=pt(P.plate);ctx.fillStyle=ac;ctx.beginPath();ctx.arc(b[0],b[1]-14,15,0,Math.PI*2);ctx.fill();ctx.fillStyle=tok('--surface');ctx.beginPath();ctx.arc(b[0],b[1]-14,3,0,Math.PI*2);ctx.fill()}
+  if(P.db){const b=pt(P.db);ctx.fillStyle=ac;ctx.fillRect(b[0]-9,b[1]-4,18,8);ctx.fillRect(b[0]-11,b[1]-7,5,14);ctx.fillRect(b[0]+6,b[1]-7,5,14)}
+}
+// Ciclo: pausa en A, baja a B, pausa en B, vuelve. 2,6 s por repetición.
+function phase(x){const e=v=>(1-Math.cos(Math.PI*v))/2;if(x<.15)return 0;if(x<.5)return e((x-.15)/.35);if(x<.65)return 1;return 1-e((x-.65)/.35)}
+let anim={raf:0,canvas:null,key:null,playing:false,t0:0,paused:0};
+const reduceMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function animStart(canvas,key){animStop();anim={raf:0,canvas,key,playing:!reduceMotion(),t0:performance.now(),paused:0.5};drawFigure(canvas,key,phase(0.5));if(anim.playing)loop()}
+function loop(){anim.raf=requestAnimationFrame(now=>{if(!anim.canvas||!anim.canvas.isConnected)return;const x=((now-anim.t0)/2600)%1;anim.paused=x;drawFigure(anim.canvas,anim.key,phase(x));if(anim.playing)loop()})}
+function animToggle(){if(!anim.canvas)return;anim.playing=!anim.playing;if(anim.playing){anim.t0=performance.now()-anim.paused*2600;loop()}else cancelAnimationFrame(anim.raf)}
+function animStop(){cancelAnimationFrame(anim.raf);anim.canvas=null}
+function drawThumbs(){document.querySelectorAll('canvas[data-fig]').forEach(c=>drawFigure(c,c.dataset.fig,1))}
+const findEx=name=>state.exercises.find(x=>x.name.trim().toLowerCase()===String(name||'').trim().toLowerCase());
+function mediaHTML(ex,thumb){
+  if(ex.media){return ex.media.type==='video'?`<video src="${esc(ex.media.src)}" ${thumb?'':'controls'} autoplay loop muted playsinline aria-label="Animación de ${esc(ex.name)}"></video>`:`<img src="${esc(ex.media.src)}" alt="Animación de ${esc(ex.name)}">`}
+  if(ex.anim&&POSES[ex.anim])return `<canvas ${thumb?`data-fig="${ex.anim}"`:'id="fig-stage"'} role="img" aria-label="Figura realizando ${esc(ex.name)}"></canvas>`;
+  return `<p class="pending">Animación pendiente</p>`;
+}
+
+/* ===================== Ficha del ejercicio (modal) ===================== */
+function openExercise(id){
+  const ex=state.exercises.find(x=>x.id===id);if(!ex)return;
+  const m=document.getElementById('modal');
+  m.innerHTML=`<div class="modal-bg" data-act="ex-close-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+    <div class="stage"><div class="anim">${mediaHTML(ex,false)}</div>
+      ${ex.anim&&!ex.media&&POSES[ex.anim]?`<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><span class="muted" style="font-size:.78rem">Animación de ejemplo</span><button class="btn sm" data-act="fig-toggle" id="fig-btn">${reduceMotion()?'Reproducir':'Pausar'}</button></div>`:''}</div>
+    <div class="info">
+      <div style="display:flex;justify-content:space-between;gap:.8rem;align-items:flex-start"><div><span class="zone">${esc(ex.zone)}</span><h2 id="ex-title" style="margin-top:.2rem">${esc(ex.name)}</h2></div><button class="btn sm" data-act="ex-close" aria-label="Cerrar">Cerrar</button></div>
+      <div class="facts"><div class="fact"><span class="label">Músculos</span><b>${esc(ex.muscles||'—')}</b></div><div class="fact"><span class="label">Equipo</span><b>${esc(ex.equipment||'—')}</b></div><div class="fact"><span class="label">Nivel</span><b>${esc(ex.level||'—')}</b></div></div>
+      <div><span class="label">Técnica paso a paso</span><ol class="steps" style="margin-top:.5rem">${ex.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+      ${ex.mistakes.length?`<div><span class="label">Errores comunes</span><ul class="mistakes" style="margin-top:.5rem">${ex.mistakes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+    </div></div></div>`;
+  const c=document.getElementById('fig-stage');if(c)requestAnimationFrame(()=>animStart(c,ex.anim));
+  m.querySelector('[data-act="ex-close"]').focus();
+}
+function closeExercise(){animStop();document.getElementById('modal').innerHTML=''}
+
+/* ===================== Vistas: biblioteca ===================== */
+function exLibrary(){
+  const list=state.exercises.filter(x=>!ui.exZone||x.zone===ui.exZone).sort((a,b)=>a.name.localeCompare(b.name));
+  const zonesUsed=ZONES.filter(z=>state.exercises.some(x=>x.zone===z));
+  return `<div class="search-row"><input class="input" id="ex-search" type="search" placeholder="Buscar ejercicio" value="${esc(ui.exQuery)}" aria-label="Buscar ejercicio">
+    <div class="chips"><button class="chip" data-act="ex-zone" data-v="" aria-pressed="${!ui.exZone}">Todas</button>${zonesUsed.map(z=>`<button class="chip" data-act="ex-zone" data-v="${esc(z)}" aria-pressed="${ui.exZone===z}">${esc(z)}</button>`).join('')}</div></div>
+  <div class="ex-grid" id="ex-grid">${list.map(x=>`<button class="ex-card" data-act="ex-open" data-id="${x.id}" data-name="${esc(x.name.toLowerCase())}"><div class="thumb">${mediaHTML(x,true)}</div><div class="body"><span class="zone">${esc(x.zone)}</span><span class="nm">${esc(x.name)}</span><span class="muted" style="font-size:.8rem">${esc(x.equipment)}</span></div></button>`).join('')}</div>
+  <p class="empty" id="ex-none" ${list.length?'hidden':''}>No hay ejercicios con ese filtro.</p>`;
+}
+function sEjercicios(){
+  return `<section class="panel"><div class="panel-head"><div><h2>Ejercicios</h2><p class="muted" style="margin-top:.2rem">Cómo se hace cada ejercicio de tu rutina, con animación, técnica y errores a evitar.</p></div></div>${exLibrary()}</section>`;
+}
+function exForm(ex){
+  const n=!ex;ex=ex||{name:'',zone:ZONES[0],muscles:'',equipment:'',level:LEVELS[0],anim:'',media:null,steps:[],mistakes:[]};
+  const media=ui.exMedia!==undefined?ui.exMedia:ex.media;
+  const prev=media?(media.type==='video'?`<video src="${esc(media.src)}" autoplay loop muted playsinline></video>`:`<img src="${esc(media.src)}" alt="">`):(ex.anim&&POSES[ex.anim]?`<canvas data-fig="${ex.anim}"></canvas>`:'<p class="pending">Sin animación</p>');
+  return `<form class="panel" data-form="exercise" data-id="${n?'':ex.id}"><div class="panel-head"><h3>${n?'Nuevo ejercicio':'Editar '+esc(ex.name)}</h3><button type="button" class="btn ghost sm" data-act="exl-cancel">Cancelar</button></div>
+    <div class="grid-form">
+      <label class="field"><span>Nombre del ejercicio</span><input class="input" id="exf-name" name="name" value="${esc(ex.name)}" required></label>
+      <label class="field"><span>Zona que trabaja</span><select class="input" id="exf-zone" name="zone">${ZONES.map(z=>`<option ${z===ex.zone?'selected':''}>${z}</option>`).join('')}</select></label>
+      <label class="field"><span>Músculos</span><input class="input" id="exf-muscles" name="muscles" value="${esc(ex.muscles)}" placeholder="Glúteo mayor, femorales"></label>
+      <label class="field"><span>Equipo</span><input class="input" id="exf-equipment" name="equipment" value="${esc(ex.equipment)}" placeholder="Barra, banco"></label>
+      <label class="field"><span>Nivel</span><select class="input" id="exf-level" name="level">${LEVELS.map(l=>`<option ${l===ex.level?'selected':''}>${l}</option>`).join('')}</select></label>
+    </div>
+    <div class="grid-form" style="align-items:start">
+      <label class="field"><span>Técnica (un paso por línea)</span><textarea class="input" id="exf-steps" name="steps" rows="6" required>${esc(ex.steps.join('\n'))}</textarea></label>
+      <label class="field"><span>Errores comunes (uno por línea)</span><textarea class="input" id="exf-mistakes" name="mistakes" rows="6">${esc(ex.mistakes.join('\n'))}</textarea></label>
+    </div>
+    <div class="field"><span>Animación</span><div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+      <div class="media-prev">${prev}</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;min-width:0">
+        <input type="file" id="exf-file" accept="video/mp4,video/webm,image/gif,image/webp,image/png" aria-label="Subir animación">
+        <span class="muted" style="font-size:.8rem">MP4, WebM, GIF o WebP. Ideal: cuadrada, de 3 a 6 segundos, en loop y sin sonido.</span>
+        ${media?'<div><button type="button" class="btn ghost sm" data-act="ex-media-clear">Quitar animación subida</button></div>':''}
+        <label class="field" style="max-width:260px"><span>Mientras tanto, usar figura de ejemplo</span><select class="input" id="exf-anim" name="anim"><option value="">Ninguna</option>${Object.entries(POSES).map(([k,v])=>`<option value="${k}" ${k===ex.anim?'selected':''}>${v.label}</option>`).join('')}</select></label>
+      </div></div></div>
+    <div><button class="btn primary" type="submit">${n?'Agregar a la biblioteca':'Guardar cambios'}</button></div></form>`;
+}
+function vEjercicios(){
+  const editing=ui.exEdit?state.exercises.find(x=>x.id===ui.exEdit):null;
+  const list=[...state.exercises].sort((a,b)=>a.name.localeCompare(b.name));
+  return `<div class="page-head"><div><h1>Ejercicios</h1><p class="muted">La biblioteca que ven las alumnas. Si el nombre coincide con un ejercicio de la rutina, la alumna puede abrir su ficha desde ahí.</p></div>
+    <button class="btn primary" data-act="exl-new">+ Nuevo ejercicio</button></div>
+  ${ui.exNew?exForm(null):''}${editing?exForm(editing):''}
+  <section class="panel"><div class="tbl-wrap"><table>
+    <thead><tr><th>Ejercicio</th><th>Zona</th><th>Equipo</th><th>Animación</th><th></th></tr></thead>
+    <tbody>${list.map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td>${esc(x.zone)}</td><td class="muted">${esc(x.equipment)}</td>
+      <td>${x.media?pill('ok','Subida'):x.anim?'<span class="muted" style="font-size:.85rem">Figura de ejemplo</span>':pill('warn','Pendiente')}</td>
+      <td class="r" style="white-space:nowrap"><button class="btn sm" data-act="ex-open" data-id="${x.id}">Ver</button> <button class="btn sm" data-act="exl-edit" data-id="${x.id}">Editar</button> <button class="btn icon" data-act="exl-del" data-id="${x.id}" aria-label="Borrar ${esc(x.name)}">×</button></td></tr>`).join('')}</tbody></table></div></section>`;
+}
+
+/* ===================== Vistas: login ===================== */
+function viewLogin(){
+  const a=ui.loginRole==='alumna';
+  return `<div class="login-wrap"><div class="login">
+    <div style="display:flex;flex-direction:column;gap:.4rem">
+      <div class="brand" style="font-size:2.6rem">Leg<i></i><b>Day</b></div>
+      <p class="muted">Tu entrenamiento, tu dieta y tu agenda en un solo lugar.</p>
+    </div>
+    <form class="login-card" data-form="login">
+      <div class="seg" role="group" aria-label="Tipo de acceso">
+        <button type="button" data-act="role" data-v="alumna" aria-pressed="${a}">Soy alumna</button>
+        <button type="button" data-act="role" data-v="entrenadora" aria-pressed="${!a}">Entrenadora</button>
+      </div>
+      <label class="field"><span>Usuario</span><input class="input" id="lg-user" name="user" autocomplete="username" required></label>
+      <label class="field"><span>Contraseña</span><input class="input" id="lg-pass" name="pass" type="password" autocomplete="current-password" required></label>
+      ${ui.loginErr?`<p class="err">${esc(ui.loginErr)}</p>`:''}
+      <button class="btn primary" type="submit">Ingresar</button>
+    </form>
+    <p class="demo-note">Prototipo con datos de ejemplo. Probá con ${a?'<code>sofia</code> / <code>legday123</code> (también valentina, camila, lucia, martina)':'<code>entrenadora</code> / <code>legday2026</code>'}.</p>
+  </div></div>`;
+}
+
+/* ===================== Vistas: entrenadora ===================== */
+const NAV=[['inicio','Resumen'],['alumnas','Alumnas'],['calendario','Calendario'],['rutinas','Rutinas'],['dietas','Dietas'],['ejercicios','Ejercicios'],['ganancias','Ganancias'],['avisos','Avisos WhatsApp'],['cuenta','Mi cuenta']];
+function adminShell(){
+  const attention=active().filter(s=>status(s).k!=='ok').length;
+  const body={inicio:vInicio,alumnas:vAlumnas,calendario:vCalendario,rutinas:vRutinas,dietas:vDietas,ejercicios:vEjercicios,ganancias:vGanancias,avisos:vAvisos,cuenta:()=>`<div class="page-head"><div><h1>Mi cuenta</h1><p class="muted">Datos de acceso al panel de la entrenadora.</p></div></div>${pwForm(state.admin.user)}`}[ui.view]();
+  return `<header class="topbar"><div class="brand">Leg<i></i><b>Day</b></div>
+    <div class="who"><span>Panel de la entrenadora</span><button class="btn sm" data-act="logout">Salir</button></div></header>
+  <div class="layout"><nav class="side" aria-label="Secciones">${NAV.map(([k,l])=>`<button data-act="nav" data-v="${k}" ${ui.view===k?'aria-current="page"':''}>${l}${k==='avisos'&&attention?`<span class="count">${attention}</span>`:''}</button>`).join('')}</nav>
+  <main class="main">${body}</main></div>`;
+}
+function paidInMonth(k){return state.payments.filter(p=>monthKey(p.date)===k)}
+function vInicio(){
+  const t=todayISO(),mk=monthKey(t);
+  const cobrado=paidInMonth(mk).reduce((a,p)=>a+p.amount,0);
+  const att=active().filter(s=>status(s).k!=='ok').sort((a,b)=>a.nextDue.localeCompare(b.nextDue));
+  const sentToday=state.messages.filter(m=>m.ts.startsWith(t)).length;
+  const dn=todayDayName();const today=state.slots.filter(c=>c.day===dn).sort((a,b)=>a.start.localeCompare(b.start));
+  return `<div class="page-head"><div><h1>Resumen</h1><p class="muted">${fmtDateLong(t)} · ${monthLabel(mk)}</p></div></div>
+  <div class="kpis">
+    <div class="kpi"><span class="label">Alumnas activas</span><span class="v">${active().length}</span><span class="s">${state.students.length-active().length} inactivas</span></div>
+    <div class="kpi"><span class="label">Cobrado en ${MONTHS_L[+mk.slice(5)-1]}</span><span class="v">${money(cobrado)}</span><span class="s">${paidInMonth(mk).length} pagos registrados</span></div>
+    <div class="kpi"><span class="label">Cuotas a revisar</span><span class="v">${att.length}</span><span class="s">por vencer o vencidas</span></div>
+    <div class="kpi"><span class="label">WhatsApp hoy</span><span class="v">${sentToday}</span><span class="s">avisos enviados</span></div>
+  </div>
+  <div class="cols">
+    <section class="panel"><div class="panel-head"><h2>Clases de hoy</h2><button class="btn sm" data-act="nav" data-v="calendario">Ver semana</button></div>
+      <div class="list">${today.length?today.map(c=>`<div class="row"><div><div class="t">${esc(c.title)}</div><div class="muted" style="font-size:.85rem">${slotWho(c)}</div></div><span class="num" style="font-family:var(--f-display);font-weight:700;font-size:1.15rem">${c.start}–${c.end}</span></div>`).join(''):'<p class="empty">No hay clases cargadas para hoy.</p>'}</div></section>
+    <section class="panel"><div class="panel-head"><h2>Cuotas a revisar</h2><button class="btn sm" data-act="nav" data-v="ganancias">Registrar pago</button></div>
+      <div class="list">${att.length?att.map(s=>{const st=status(s);return `<div class="row"><div><div class="t">${esc(s.name)}</div><div class="muted num" style="font-size:.85rem">${money(s.fee)} · vence ${fmtDateLong(s.nextDue)}</div></div>${pill(st.k,st.t)}</div>`}).join(''):'<p class="empty">Todas las cuotas están al día.</p>'}</div></section>
+  </div>`;
+}
+function slotWho(c){if(c.all)return 'Todas las alumnas';return c.students.map(id=>stu(id)?first(stu(id).name):'').filter(Boolean).join(', ')||'Sin alumnas'}
+
+function studentForm(s){
+  const n=!s;s=s||{name:'',user:'',pass:'',phone:'+54 9 11 ',plan:'',fee:26000,nextDue:addMonth(todayISO()),active:true};
+  return `<form class="panel" data-form="student" data-id="${n?'':s.id}"><div class="panel-head"><h3>${n?'Nueva alumna':'Editar '+esc(s.name)}</h3><button type="button" class="btn ghost sm" data-act="cancel-edit">Cancelar</button></div>
+  <div class="grid-form">
+    <label class="field"><span>Nombre y apellido</span><input class="input" id="f-name" name="name" value="${esc(s.name)}" required></label>
+    <label class="field"><span>Usuario</span><input class="input" id="f-user" name="user" value="${esc(s.user)}" required autocomplete="off"></label>
+    <label class="field"><span>Contraseña</span><input class="input" id="f-pass" name="pass" value="${esc(s.pass)}" required autocomplete="off"></label>
+    <label class="field"><span>WhatsApp</span><input class="input" id="f-phone" name="phone" value="${esc(s.phone)}" required></label>
+    <label class="field"><span>Plan</span><input class="input" id="f-plan" name="plan" value="${esc(s.plan)}" placeholder="Grupal 3x semana"></label>
+    <label class="field"><span>Cuota mensual ($)</span><input class="input num" id="f-fee" name="fee" type="number" min="0" step="500" value="${s.fee}" required></label>
+    <label class="field"><span>Próximo vencimiento</span><input class="input" id="f-due" name="nextDue" type="date" value="${s.nextDue}" required></label>
+    <label class="check" style="align-self:center"><input type="checkbox" id="f-active" name="active" ${s.active?'checked':''}> Activa</label>
+  </div>
+  <div><button class="btn primary" type="submit">${n?'Crear alumna':'Guardar cambios'}</button></div></form>`;
+}
+function vAlumnas(){
+  const editing=ui.editing?stu(ui.editing):null;
+  return `<div class="page-head"><div><h1>Alumnas</h1><p class="muted">Accesos, contacto de WhatsApp y cuota de cada alumna.</p></div>
+    <button class="btn primary" data-act="new-student">+ Nueva alumna</button></div>
+  ${ui.showNew?studentForm(null):''}${editing?studentForm(editing):''}
+  <section class="panel"><div class="tbl-wrap"><table>
+    <thead><tr><th>Alumna</th><th>Usuario</th><th>WhatsApp</th><th>Plan</th><th class="r">Cuota</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${state.students.map(s=>{const st=s.active?status(s):{k:'',t:'Inactiva'};return `<tr>
+      <td><strong>${esc(s.name)}</strong></td><td class="muted">${esc(s.user)}</td><td class="num" style="white-space:nowrap">${esc(s.phone)}</td>
+      <td class="muted">${esc(s.plan)}</td><td class="r num">${money(s.fee)}</td><td class="num" style="white-space:nowrap">${fmtDate(s.nextDue)}</td>
+      <td>${s.active?pill(st.k,st.t):'<span class="muted">Inactiva</span>'}</td>
+      <td class="r"><button class="btn sm" data-act="edit-student" data-id="${s.id}">Editar</button></td></tr>`}).join('')}</tbody></table></div></section>`;
+}
+
+function vCalendario(){
+  const dn=todayDayName();
+  return `<div class="page-head"><div><h1>Calendario semanal</h1><p class="muted">Cada cambio se refleja al instante en el perfil de las alumnas y les llega un WhatsApp.</p></div></div>
+  <section class="panel"><div class="week">${DAYS.map(d=>{const sl=state.slots.filter(c=>c.day===d).sort((a,b)=>a.start.localeCompare(b.start));
+    return `<div class="day ${d===dn?'today':''}"><div class="day-h"><h3>${d}</h3>${d===dn?'<span class="label" style="color:var(--accent)">Hoy</span>':''}</div>
+    ${sl.map(c=>`<div class="slot"><button class="x" data-act="slot-del" data-id="${c.id}" aria-label="Quitar ${esc(c.title)} del ${d}">×</button><span class="tm">${c.start}–${c.end}</span><span class="ti">${esc(c.title)}</span><span class="wh">${esc(slotWho(c))}</span></div>`).join('')||'<p class="empty" style="font-size:.82rem">Sin clases</p>'}</div>`}).join('')}</div></section>
+  <form class="panel" data-form="slot"><h2>Agregar horario</h2>
+    <div class="grid-form">
+      <label class="field"><span>Día</span><select class="input" id="sl-day" name="day">${DAYS.map(d=>`<option>${d}</option>`).join('')}</select></label>
+      <label class="field"><span>Desde</span><input class="input" id="sl-start" name="start" type="time" value="18:00" required></label>
+      <label class="field"><span>Hasta</span><input class="input" id="sl-end" name="end" type="time" value="19:00" required></label>
+      <label class="field"><span>Actividad</span><input class="input" id="sl-title" name="title" placeholder="Funcional grupal" required></label>
+    </div>
+    <div class="field"><span>¿Quiénes participan?</span><div class="checks">
+      <label class="check"><input type="checkbox" id="sl-all" name="all"> Todas</label>
+      ${active().map(s=>`<label class="check"><input type="checkbox" id="sl-s-${s.id}" name="st" value="${s.id}"> ${esc(s.name)}</label>`).join('')}</div></div>
+    <div><button class="btn primary" type="submit">Agregar y avisar por WhatsApp</button></div></form>`;
+}
+
+function studentSelect(id,cur,act){return `<label class="field" style="max-width:280px"><span>Alumna</span><select class="input" id="${id}" data-change="${act}">${active().map(s=>`<option value="${s.id}" ${s.id===cur?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`}
+function applyTo(prefix,cur){return `<div class="field"><span>Aplicar los mismos cambios también a</span><div class="checks">${active().filter(s=>s.id!==cur).map(s=>`<label class="check"><input type="checkbox" id="${prefix}-${s.id}" data-apply="${prefix}" value="${s.id}"> ${esc(s.name)}</label>`).join('')}</div></div>`}
+function lastUpd(s,k){const u=s.updated[k];return u?`Última actualización: ${fmtDateLong(u.slice(0,10))} ${u.slice(11)}`:'Sin cambios registrados'}
+
+function vRutinas(){
+  if(!stu(ui.rStudent)||!stu(ui.rStudent).active)ui.rStudent=active()[0]?.id;
+  if(!ui.rStudent)return '<h1>Rutinas</h1><p class="empty">Primero cargá una alumna activa.</p>';
+  if(!ui.rdraft||ui.rdraft._for!==ui.rStudent){ui.rdraft=clone(state.routines[ui.rStudent]);ui.rdraft._for=ui.rStudent;ui.rDay=0}
+  const r=ui.rdraft,s=stu(ui.rStudent);if(ui.rDay>=r.days.length)ui.rDay=Math.max(0,r.days.length-1);
+  const d=r.days[ui.rDay];
+  return `<div class="page-head"><div><h1>Rutinas</h1><p class="muted">Editá, guardá y la alumna la ve en su perfil al instante.</p></div></div>
+  <section class="panel">
+    <div class="panel-head">${studentSelect('r-student',ui.rStudent,'rStudent')}<span class="muted" style="font-size:.85rem">${lastUpd(s,'rutina')}</span></div>
+    <div class="tabs">${r.days.map((x,i)=>`<button class="tab" data-act="rday" data-i="${i}" aria-pressed="${i===ui.rDay}">${x.day}</button>`).join('')}
+      <select class="input" style="width:auto" id="r-addday" data-change="rAddDay"><option value="">+ Agregar día</option>${DAYS.filter(x=>!r.days.some(y=>y.day===x)).map(x=>`<option>${x}</option>`).join('')}</select></div>
+    ${d?`<div class="grid-form"><label class="field"><span>Enfoque del ${d.day}</span><input class="input" id="r-focus-${ui.rDay}" data-r="focus" value="${esc(d.focus)}"></label>
+      <div><button class="btn ghost sm" data-act="rday-del">Quitar ${d.day} de la rutina</button></div></div>
+    <div class="tbl-wrap"><table class="edit-tbl"><thead><tr><th>Ejercicio</th><th>Series</th><th>Reps</th><th>Descanso</th><th>Notas</th><th></th></tr></thead><tbody>
+      ${d.exercises.map((e,i)=>`<tr>
+        <td style="min-width:190px"><input class="input" id="r-${ui.rDay}-${i}-name" data-r="${i}.name" value="${esc(e.name)}" list="ex-names" aria-label="Ejercicio"></td>
+        <td><input class="input w-s num" id="r-${ui.rDay}-${i}-sets" data-r="${i}.sets" value="${esc(e.sets)}" aria-label="Series"></td>
+        <td><input class="input w-m num" id="r-${ui.rDay}-${i}-reps" data-r="${i}.reps" value="${esc(e.reps)}" aria-label="Repeticiones"></td>
+        <td><input class="input w-m" id="r-${ui.rDay}-${i}-rest" data-r="${i}.rest" value="${esc(e.rest)}" aria-label="Descanso"></td>
+        <td style="min-width:180px"><input class="input" id="r-${ui.rDay}-${i}-notes" data-r="${i}.notes" value="${esc(e.notes)}" aria-label="Notas"></td>
+        <td><button class="btn icon" data-act="ex-del" data-i="${i}" aria-label="Quitar ejercicio">×</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="ex-add">+ Agregar ejercicio</button><span class="muted" style="font-size:.8rem">Elegí el nombre de la lista para que la alumna pueda ver la ficha y la animación.</span></div>
+    <datalist id="ex-names">${state.exercises.map(x=>`<option value="${esc(x.name)}">`).join('')}</datalist>`:'<p class="empty">Agregá un día para empezar.</p>'}
+    ${applyTo('ra',ui.rStudent)}
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn primary" data-act="r-save">Guardar y avisar por WhatsApp</button><button class="btn ghost" data-act="r-discard">Descartar cambios</button></div>
+  </section>`;
+}
+
+function vDietas(){
+  if(!stu(ui.dStudent)||!stu(ui.dStudent).active)ui.dStudent=active()[0]?.id;
+  if(!ui.dStudent)return '<h1>Dietas</h1><p class="empty">Primero cargá una alumna activa.</p>';
+  if(!ui.ddraft||ui.ddraft._for!==ui.dStudent){ui.ddraft=clone(state.diets[ui.dStudent]);ui.ddraft._for=ui.dStudent}
+  const d=ui.ddraft,s=stu(ui.dStudent);
+  return `<div class="page-head"><div><h1>Dietas</h1><p class="muted">Plan de alimentación de cada alumna.</p></div></div>
+  <section class="panel">
+    <div class="panel-head">${studentSelect('d-student',ui.dStudent,'dStudent')}<span class="muted" style="font-size:.85rem">${lastUpd(s,'dieta')}</span></div>
+    <div class="grid-form">
+      <label class="field"><span>Calorías diarias (kcal)</span><input class="input num" id="d-kcal" data-d="kcal" value="${esc(d.kcal)}"></label>
+      <label class="field"><span>Proteína diaria (g)</span><input class="input num" id="d-protein" data-d="protein" value="${esc(d.protein)}"></label>
+    </div>
+    <div>${d.meals.map((m,i)=>`<div class="meal">
+      <input class="input" id="d-m${i}-name" data-d="m.${i}.name" value="${esc(m.name)}" aria-label="Comida">
+      <input class="input num" id="d-m${i}-time" data-d="m.${i}.time" type="time" value="${esc(m.time)}" aria-label="Hora">
+      <textarea class="input" id="d-m${i}-items" data-d="m.${i}.items" rows="2" aria-label="Detalle">${esc(m.items)}</textarea>
+      <button class="btn icon" data-act="meal-del" data-i="${i}" aria-label="Quitar comida">×</button></div>`).join('')}</div>
+    <div><button class="btn sm" data-act="meal-add">+ Agregar comida</button></div>
+    <label class="field"><span>Indicaciones generales</span><textarea class="input" id="d-notes" data-d="notes" rows="2">${esc(d.notes)}</textarea></label>
+    ${applyTo('da',ui.dStudent)}
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn primary" data-act="d-save">Guardar y avisar por WhatsApp</button><button class="btn ghost" data-act="d-discard">Descartar cambios</button></div>
+  </section>`;
+}
+
+function monthsBack(k,n){const [y,m]=k.split('-').map(Number);const out=[];for(let i=n-1;i>=0;i--){const d=new Date(y,m-1-i,1);out.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}`)}return out}
+function chart(k){
+  const ms=monthsBack(k,6),vals=ms.map(x=>paidInMonth(x).reduce((a,p)=>a+p.amount,0));
+  const max=Math.max(...vals,1),W=560,H=200,top=24,bot=26,bw=56,gap=(W-ms.length*bw)/(ms.length+1);
+  const h=v=>(H-top-bot)*v/max;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Cobrado por mes, últimos 6 meses">
+    <line class="grid" x1="0" x2="${W}" y1="${H-bot}" y2="${H-bot}"/>
+    ${ms.map((x,i)=>{const X=gap+i*(bw+gap),bh=h(vals[i]),Y=H-bot-bh;
+      return `<rect class="bar ${x===k?'cur':''}" x="${X}" y="${Y}" width="${bw}" height="${Math.max(bh,1)}" rx="4"/>
+      <text class="val" x="${X+bw/2}" y="${Y-6}" text-anchor="middle">${vals[i]?'$'+Math.round(vals[i]/1000)+'k':'—'}</text>
+      <text x="${X+bw/2}" y="${H-8}" text-anchor="middle">${MONTHS[+x.slice(5)-1]}</text>`}).join('')}</svg>`;
+}
+function vGanancias(){
+  const k=ui.gMonth,pays=paidInMonth(k).sort((a,b)=>b.date.localeCompare(a.date));
+  const total=pays.reduce((a,p)=>a+p.amount,0);
+  const paidIds=new Set(pays.map(p=>p.studentId));
+  const pending=active().filter(s=>!paidIds.has(s.id));
+  const expected=active().reduce((a,s)=>a+s.fee,0);
+  const year=k.slice(0,4),ytd=state.payments.filter(p=>p.date.startsWith(year)).reduce((a,p)=>a+p.amount,0);
+  const allMonths=[...new Set([...state.payments.map(p=>monthKey(p.date)),monthKey(todayISO())])].sort().reverse();
+  const byMethod={};pays.forEach(p=>byMethod[p.method]=(byMethod[p.method]||0)+p.amount);
+  return `<div class="page-head"><div><h1>Ganancias</h1><p class="muted">Contaduría de las cuotas mensuales.</p></div>
+    <div style="display:flex;gap:.6rem;align-items:end;flex-wrap:wrap"><label class="field"><span>Mes</span><select class="input" id="g-month" data-change="gMonth">${allMonths.map(m=>`<option value="${m}" ${m===k?'selected':''}>${monthLabel(m)}</option>`).join('')}</select></label>
+    <button class="btn" data-act="csv">Exportar CSV</button></div></div>
+  <div class="kpis">
+    <div class="kpi"><span class="label">Cobrado en el mes</span><span class="v">${money(total)}</span><span class="s">${pays.length} pagos</span></div>
+    <div class="kpi"><span class="label">Esperado</span><span class="v">${money(expected)}</span><span class="s">suma de cuotas activas</span></div>
+    <div class="kpi"><span class="label">Falta cobrar</span><span class="v">${money(pending.reduce((a,s)=>a+s.fee,0))}</span><span class="s">${pending.length} alumnas sin pago</span></div>
+    <div class="kpi"><span class="label">Acumulado ${year}</span><span class="v">${money(ytd)}</span><span class="s">enero a la fecha</span></div>
+  </div>
+  <div class="cols">
+    <section class="panel"><h2>Últimos 6 meses</h2>${chart(k)}
+      <div class="list">${Object.entries(byMethod).map(([m,v])=>`<div class="row"><span>${esc(m)}</span><span class="num">${money(v)}</span></div>`).join('')||'<p class="empty">Sin pagos en este mes.</p>'}</div></section>
+    <form class="panel" data-form="payment"><h2>Registrar pago</h2>
+      <div class="grid-form">
+        <label class="field"><span>Alumna</span><select class="input" id="p-student" name="studentId">${active().map(s=>`<option value="${s.id}" ${pending[0]?.id===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
+        <label class="field"><span>Monto ($)</span><input class="input num" id="p-amount" name="amount" type="number" min="0" step="500" placeholder="Cuota de la alumna"></label>
+        <label class="field"><span>Fecha</span><input class="input" id="p-date" name="date" type="date" value="${todayISO()}" required></label>
+        <label class="field"><span>Medio</span><select class="input" id="p-method" name="method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></label>
+      </div>
+      <p class="muted" style="font-size:.82rem">Al registrarlo, el próximo vencimiento se corre un mes y la alumna recibe la confirmación por WhatsApp.</p>
+      <div><button class="btn primary" type="submit">Registrar pago</button></div>
+      ${pending.length?`<div class="list"><span class="label">Sin pago en ${monthLabel(k)}</span>${pending.map(s=>{const st=status(s);return `<div class="row"><span>${esc(s.name)}</span><span style="display:flex;gap:.5rem;align-items:center"><span class="num muted">${money(s.fee)}</span>${pill(st.k,st.t)}</span></div>`}).join('')}</div>`:''}
+    </form>
+  </div>
+  <section class="panel"><h2>Pagos de ${monthLabel(k)}</h2><div class="tbl-wrap"><table>
+    <thead><tr><th>Fecha</th><th>Alumna</th><th>Medio</th><th class="r">Monto</th><th></th></tr></thead>
+    <tbody>${pays.map(p=>`<tr><td class="num">${fmtDate(p.date)}</td><td>${esc(stu(p.studentId)?.name||'—')}</td><td class="muted">${esc(p.method)}</td><td class="r num">${money(p.amount)}</td><td class="r"><button class="btn icon" data-act="pay-del" data-id="${p.id}" aria-label="Borrar pago">×</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">No hay pagos registrados en este mes.</td></tr>'}
+    ${pays.length?`<tr><td colspan="3"><strong>Total</strong></td><td class="r num"><strong>${money(total)}</strong></td><td></td></tr>`:''}</tbody></table></div></section>`;
+}
+
+function vAvisos(){
+  const t=todayISO();
+  const up=active().map(s=>({s,r:reminderDate(s.nextDue)})).sort((a,b)=>a.s.nextDue.localeCompare(b.s.nextDue));
+  return `<div class="page-head"><div><h1>Avisos WhatsApp</h1><p class="muted">Recordatorio automático 2 días hábiles antes del vencimiento, y aviso en cada actualización.</p></div>
+    <button class="btn primary" data-act="run-rem">Revisar y enviar recordatorios</button></div>
+  <p class="banner">Prototipo: los mensajes se simulan y quedan en el historial. En la web final salen solos por la API oficial de WhatsApp todos los días a las 9:00.</p>
+  <div class="cols">
+  <section class="panel"><h2>Próximos vencimientos</h2><div class="tbl-wrap"><table>
+    <thead><tr><th>Alumna</th><th>Vence</th><th>Aviso</th><th>Estado</th></tr></thead>
+    <tbody>${up.map(({s,r})=>{let st;
+      if(s.reminderSentFor===s.nextDue)st=pill('ok','Enviado');
+      else if(t>s.nextDue)st=pill('bad','Vencida');
+      else if(t>=r)st=pill('warn','Enviar hoy');
+      else st='<span class="muted" style="font-size:.85rem">Programado</span>';
+      return `<tr><td>${esc(s.name)}</td><td class="num" style="white-space:nowrap">${fmtDateLong(s.nextDue)}</td><td class="num" style="white-space:nowrap">${fmtDateLong(r)}</td><td>${st}</td></tr>`}).join('')}</tbody></table></div></section>
+  <section class="panel"><h2>Historial de mensajes</h2><div class="wa-log">${state.messages.slice(0,30).map(m=>{const s=stu(m.studentId);return `<div class="wa">
+    <div class="meta"><span><strong>${esc(s?.name||'')}</strong> · ${esc(s?.phone||'')}</span><span class="num">${esc(fmtDateLong(m.ts.slice(0,10)))} ${esc(m.ts.slice(11))}</span></div>
+    <span class="tag">${esc(m.type)}</span><span class="txt">${esc(m.text)}</span></div>`}).join('')||'<p class="empty">Todavía no se enviaron mensajes.</p>'}</div></section>
+  </div>`;
+}
+
+function pwForm(user){return `<form class="panel" data-form="password" style="max-width:520px"><div><h2>Cambiar contraseña</h2><p class="muted" style="margin-top:.3rem">Tu usuario es <strong>${esc(user)}</strong>. Usá al menos 8 caracteres.</p></div>
+  <label class="field"><span>Contraseña actual</span><input class="input" id="pw-cur" name="current" type="password" autocomplete="current-password" required></label>
+  <label class="field"><span>Contraseña nueva</span><input class="input" id="pw-new" name="next" type="password" autocomplete="new-password" minlength="8" required></label>
+  <label class="field"><span>Repetir contraseña nueva</span><input class="input" id="pw-rep" name="confirm" type="password" autocomplete="new-password" minlength="8" required></label>
+  <div><button class="btn primary" type="submit">Cambiar contraseña</button></div></form>`}
+
+/* ===================== Vistas: alumna ===================== */
+const SNAV=[['semana','Mi semana'],['rutina','Rutina'],['dieta','Dieta'],['ejercicios','Ejercicios'],['cuota','Mi cuota'],['cuenta','Mi cuenta']];
+function isNew(s,k){return daysSince(s.updated[k])<=3}
+function studentShell(){
+  const s=stu(session.id),st=status(s);
+  const body={semana:sSemana,rutina:sRutina,dieta:sDieta,ejercicios:sEjercicios,cuota:sCuota,cuenta:s=>pwForm(s.user)}[ui.sview](s);
+  const nb=k=>isNew(s,k)?'<span class="count">nuevo</span>':'';
+  return `<header class="topbar"><div class="brand">Leg<i></i><b>Day</b></div><div class="who"><span>${esc(s.name)}</span><button class="btn sm" data-act="logout">Salir</button></div></header>
+  <div class="layout"><nav class="side" aria-label="Secciones">${SNAV.map(([k,l])=>`<button data-act="snav" data-v="${k}" ${ui.sview===k?'aria-current="page"':''}>${l}${k==='semana'?nb('calendario'):k==='rutina'?nb('rutina'):k==='dieta'?nb('dieta'):''}</button>`).join('')}</nav>
+  <main class="main">
+    <section class="hero"><div style="display:flex;flex-direction:column;gap:.5rem;min-width:0">
+      <span class="label">${esc(s.plan)}</span><h1>Hola, ${esc(first(s.name))}</h1>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">${pill(st.k,'Cuota: '+st.t)}<span class="muted num" style="font-size:.88rem">vence ${fmtDateLong(s.nextDue)}</span></div></div>
+      <div class="pdf-box"><span class="label">Descargar en PDF</span><div class="pdf-btns">
+        <button class="btn sm" data-act="pdf" data-v="rutina">Rutina</button><button class="btn sm" data-act="pdf" data-v="dieta">Dieta</button><button class="btn sm primary" data-act="pdf" data-v="ambos">Rutina + dieta</button></div></div>
+    </section>${body}</main></div>`;
+}
+function sSemana(s){
+  const dn=todayDayName();const mine=state.slots.filter(c=>c.all||c.students.includes(s.id));
+  return `<section class="panel"><div class="panel-head"><h2>Mis horarios</h2><span class="muted" style="font-size:.85rem">${isNew(s,'calendario')?pill('new','Actualizado')+' ':''}${lastUpd(s,'calendario')}</span></div>
+  <div class="week">${DAYS.map(d=>{const sl=mine.filter(c=>c.day===d).sort((a,b)=>a.start.localeCompare(b.start));
+    return `<div class="day ${d===dn?'today':''}"><div class="day-h"><h3>${d}</h3>${d===dn?'<span class="label" style="color:var(--accent)">Hoy</span>':''}</div>${sl.map(c=>`<div class="slot"><span class="tm">${c.start}–${c.end}</span><span class="ti">${esc(c.title)}</span></div>`).join('')||'<p class="empty" style="font-size:.82rem">Descanso</p>'}</div>`}).join('')}</div></section>`;
+}
+function sRutina(s){
+  const r=state.routines[s.id];
+  return `<div class="panel-head"><h2>Mi rutina</h2><span class="muted" style="font-size:.85rem">${isNew(s,'rutina')?pill('new','Actualizada')+' ':''}${lastUpd(s,'rutina')}</span></div>
+  <div class="cols">${r.days.map(d=>`<article class="daycard"><div class="daycard-h"><h3>${d.day}</h3><span class="muted">${esc(d.focus)}</span></div>
+    ${d.exercises.map(e=>{const lib=findEx(e.name);return `<div class="ex"><span class="n">${esc(e.name)}</span><span class="sr">${esc(e.sets)} × ${esc(e.reps)}</span>${e.rest||e.notes?`<span class="nt">${e.rest?'Descanso '+esc(e.rest):''}${e.rest&&e.notes?' · ':''}${esc(e.notes)}</span>`:''}${lib?`<span class="nt"><button class="link-btn" data-act="ex-open" data-id="${lib.id}">Ver técnica y animación</button></span>`:''}</div>`}).join('')}</article>`).join('')}</div>`;
+}
+function sDieta(s){
+  const d=state.diets[s.id];
+  return `<section class="panel"><div class="panel-head"><h2>Mi dieta</h2><span class="muted" style="font-size:.85rem">${isNew(s,'dieta')?pill('new','Actualizada')+' ':''}${lastUpd(s,'dieta')}</span></div>
+  <div class="kpis"><div class="kpi"><span class="label">Calorías por día</span><span class="v">${esc(d.kcal)} <small style="font-size:1rem">kcal</small></span></div><div class="kpi"><span class="label">Proteína por día</span><span class="v">${esc(d.protein)} <small style="font-size:1rem">g</small></span></div></div>
+  <div class="list">${d.meals.map(m=>`<div class="row" style="align-items:flex-start;flex-wrap:nowrap"><div style="min-width:0"><div class="t">${esc(m.name)}</div><div class="muted">${esc(m.items)}</div></div><span class="num" style="font-family:var(--f-display);font-weight:700;font-size:1.2rem;color:var(--accent)">${esc(m.time)}</span></div>`).join('')}</div>
+  ${d.notes?`<p class="demo-note">${esc(d.notes)}</p>`:''}</section>`;
+}
+function sCuota(s){
+  const st=status(s),pays=state.payments.filter(p=>p.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="cols"><section class="panel"><h2>Mi cuota</h2>
+    <div class="list"><div class="row"><span>Estado</span>${pill(st.k,st.t)}</div><div class="row"><span>Monto mensual</span><strong class="num">${money(s.fee)}</strong></div><div class="row"><span>Próximo vencimiento</span><strong>${fmtDateLong(s.nextDue)}</strong></div><div class="row"><span>Te avisamos por WhatsApp</span><span>${fmtDateLong(reminderDate(s.nextDue))}</span></div></div></section>
+  <section class="panel"><h2>Mis pagos</h2><div class="list">${pays.map(p=>`<div class="row"><span>${monthLabel(monthKey(p.date))}<br><span class="muted" style="font-size:.82rem">${fmtDate(p.date)} · ${esc(p.method)}</span></span><span class="num">${money(p.amount)}</span></div>`).join('')||'<p class="empty">Sin pagos registrados.</p>'}</div></section></div>`;
+}
+
+/* ===================== Render ===================== */
+function render(){
+  const app=document.getElementById('app');
+  app.innerHTML=!session?viewLogin():session.role==='admin'?adminShell():studentShell();
+  applyExFilter();drawThumbs();
+}
+function applyExFilter(){const g=document.getElementById('ex-grid');if(!g)return;const q=ui.exQuery.trim().toLowerCase();let n=0;g.querySelectorAll('.ex-card').forEach(c=>{const ok=!q||c.dataset.name.includes(q);c.hidden=!ok;if(ok)n++});const e=document.getElementById('ex-none');if(e)e.hidden=n>0}
+
+/* ===================== Eventos ===================== */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v,i=+b.dataset.i,id=b.dataset.id;
+  switch(a){
+    case 'role':ui.loginRole=v;ui.loginErr='';break;
+    case 'logout':closeExercise();session=null;ui.rdraft=ui.ddraft=null;break;
+    case 'nav':ui.view=v;ui.editing=null;ui.showNew=false;ui.exEdit=null;ui.exNew=false;break;
+    case 'snav':ui.sview=v;break;
+    case 'new-student':ui.showNew=true;ui.editing=null;break;
+    case 'edit-student':ui.editing=id;ui.showNew=false;break;
+    case 'cancel-edit':ui.editing=null;ui.showNew=false;break;
+    case 'slot-del':{const c=state.slots.find(x=>x.id===id);state.slots=state.slots.filter(x=>x.id!==id);const ids=c.all?active().map(s=>s.id):c.students;notifyUpdate(ids,'calendario');save();toast(`Horario quitado. Aviso enviado a ${ids.length} ${ids.length===1?'alumna':'alumnas'}.`);break}
+    case 'rday':ui.rDay=i;break;
+    case 'rday-del':ui.rdraft.days.splice(ui.rDay,1);ui.rDay=0;break;
+    case 'ex-add':ui.rdraft.days[ui.rDay].exercises.push({name:'',sets:'3',reps:'12',rest:'60 s',notes:''});break;
+    case 'ex-del':ui.rdraft.days[ui.rDay].exercises.splice(i,1);break;
+    case 'r-discard':ui.rdraft=null;toast('Cambios descartados.');break;
+    case 'r-save':{const ids=[ui.rStudent,...[...document.querySelectorAll('[data-apply="ra"]:checked')].map(x=>x.value)];
+      const data=clone(ui.rdraft);delete data._for;data.days.forEach(d=>d.exercises=d.exercises.filter(x=>x.name.trim()));
+      ids.forEach(id=>state.routines[id]=clone(data));notifyUpdate(ids,'rutina');save();ui.rdraft=null;
+      toast(`Rutina guardada. WhatsApp enviado a ${ids.map(x=>first(stu(x).name)).join(', ')}.`);break}
+    case 'meal-add':ui.ddraft.meals.push({name:'Colación',time:'11:00',items:''});break;
+    case 'meal-del':ui.ddraft.meals.splice(i,1);break;
+    case 'd-discard':ui.ddraft=null;toast('Cambios descartados.');break;
+    case 'd-save':{const ids=[ui.dStudent,...[...document.querySelectorAll('[data-apply="da"]:checked')].map(x=>x.value)];
+      const data=clone(ui.ddraft);delete data._for;data.meals.sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+      ids.forEach(id=>state.diets[id]=clone(data));notifyUpdate(ids,'dieta');save();ui.ddraft=null;
+      toast(`Dieta guardada. WhatsApp enviado a ${ids.map(x=>first(stu(x).name)).join(', ')}.`);break}
+    case 'pay-del':state.payments=state.payments.filter(p=>p.id!==id);save();toast('Pago borrado. Revisá el vencimiento de la alumna si hace falta.');break;
+    case 'run-rem':{const n=runReminders();toast(n?`Se enviaron ${n} recordatorios.`:'No hay recordatorios pendientes para hoy.');break}
+    case 'csv':{const k=ui.gMonth;const rows=[['Fecha','Alumna','Medio','Monto']].concat(paidInMonth(k).sort((a,b)=>a.date.localeCompare(b.date)).map(p=>[p.date,stu(p.studentId)?.name||'',p.method,p.amount]));
+      const csv='﻿'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');offerFile(`LegDay-pagos-${k}.csv`,csv);return}
+    case 'pdf':downloadPdf(v);return;
+    case 'ex-open':openExercise(id);return;
+    case 'ex-close':closeExercise();return;
+    case 'ex-close-bg':if(e.target===b)closeExercise();return;
+    case 'fig-toggle':animToggle();b.textContent=anim.playing?'Pausar':'Reproducir';return;
+    case 'ex-zone':ui.exZone=v;break;
+    case 'exl-new':ui.exNew=true;ui.exEdit=null;ui.exMedia=undefined;break;
+    case 'exl-edit':ui.exEdit=id;ui.exNew=false;ui.exMedia=undefined;break;
+    case 'exl-cancel':ui.exEdit=null;ui.exNew=false;ui.exMedia=undefined;break;
+    case 'ex-media-clear':ui.exMedia=null;break;
+    case 'exl-del':{const x=state.exercises.find(y=>y.id===id);if(b.dataset.confirm!=='1'){b.dataset.confirm='1';b.textContent='¿Borrar?';b.setAttribute('aria-label','Confirmar borrado de '+x.name);setTimeout(()=>{if(b.isConnected){b.dataset.confirm='';b.textContent='×'}},3000);return}
+      state.exercises=state.exercises.filter(y=>y.id!==id);save();toast(`"${x.name}" se quitó de la biblioteca.`);break}
+    default:return;
+  }
+  render();
+});
+document.addEventListener('change',e=>{
+  const c=e.target.dataset.change;if(!c)return;
+  if(c==='rAddDay'){if(!e.target.value)return;ui.rdraft.days.push({day:e.target.value,focus:'',exercises:[]});ui.rdraft.days.sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day));ui.rDay=ui.rdraft.days.findIndex(d=>d.day===e.target.value)}
+  else ui[c]=e.target.value;
+  render();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.modal-bg'))closeExercise()});
+document.addEventListener('change',e=>{
+  if(e.target.id!=='exf-file')return;const f=e.target.files[0];if(!f)return;
+  if(f.size>3*1024*1024){toast('En el prototipo el archivo puede pesar hasta 3 MB. En la web final el límite es mucho mayor.');e.target.value='';return}
+  const r=new FileReader();r.onload=()=>{
+    const form=e.target.closest('form');const keep={};form.querySelectorAll('input[name],select[name],textarea[name]').forEach(el=>keep[el.id]=el.value);
+    ui.exMedia={type:f.type.startsWith('video')?'video':'image',src:r.result};render();
+    Object.entries(keep).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v})};
+  r.readAsDataURL(f);
+});
+window.addEventListener('resize',()=>{clearTimeout(window.__rs);window.__rs=setTimeout(drawThumbs,150)});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='ex-search'){ui.exQuery=t.value;applyExFilter();return}
+  if(t.dataset.r!==undefined&&ui.rdraft){const d=ui.rdraft.days[ui.rDay];if(t.dataset.r==='focus')d.focus=t.value;else{const [i,f]=t.dataset.r.split('.');d.exercises[+i][f]=t.value}}
+  if(t.dataset.d!==undefined&&ui.ddraft){const p=t.dataset.d.split('.');if(p[0]==='m')ui.ddraft.meals[+p[1]][p[2]]=t.value;else ui.ddraft[p[0]]=t.value}
+});
+document.addEventListener('submit',e=>{
+  const f=e.target,k=f.dataset.form;if(!k)return;e.preventDefault();
+  const fd=new FormData(f);
+  if(k==='login'){
+    const u=fd.get('user').trim().toLowerCase(),p=fd.get('pass');
+    if(ui.loginRole==='entrenadora'){if(u===state.admin.user&&p===state.admin.pass){session={role:'admin'};ui.view='inicio';ui.loginErr='';if(autoSent)setTimeout(()=>toast(`Se enviaron ${autoSent} recordatorios de cuota automáticamente hoy.`),300)}else ui.loginErr='Usuario o contraseña incorrectos.'}
+    else{const s=state.students.find(x=>x.user===u&&x.pass===p);
+      if(!s)ui.loginErr='Usuario o contraseña incorrectos.';else if(!s.active)ui.loginErr='Tu acceso está pausado. Escribile a tu entrenadora para reactivarlo.';else{session={role:'student',id:s.id};ui.sview='semana';ui.loginErr=''}}
+  }
+  if(k==='student'){
+    const id=f.dataset.id,user=fd.get('user').trim().toLowerCase();
+    if(state.students.some(s=>s.user===user&&s.id!==id)){toast('Ese usuario ya existe. Elegí otro.');return}
+    const data={name:fd.get('name').trim(),user,pass:fd.get('pass'),phone:fd.get('phone').trim(),plan:fd.get('plan').trim(),fee:+fd.get('fee'),nextDue:fd.get('nextDue'),active:fd.get('active')==='on'};
+    if(id){const s=stu(id);if(s.nextDue!==data.nextDue)s.reminderSentFor=null;Object.assign(s,data);toast('Datos de la alumna guardados.')}
+    else{const nidv=nid('s');const t=nowStamp();state.students.push({id:nidv,...data,reminderSentFor:null,updated:{rutina:t,dieta:t,calendario:t}});
+      const anyR=state.routines[active()[0]?.id];state.routines[nidv]=anyR?clone(anyR):{days:[]};state.diets[nidv]={kcal:'',protein:'',notes:'',meals:[]};
+      sendWA(nidv,'bienvenida',`Hola ${first(data.name)}! Bienvenida a LegDay 💪 Tu usuario es "${user}". Entrá a legday.com.ar para ver tu rutina, tu dieta y tus horarios.`);
+      toast('Alumna creada. Le enviamos sus datos de acceso por WhatsApp.')}
+    ui.editing=null;ui.showNew=false;save();
+  }
+  if(k==='slot'){
+    const all=fd.get('all')==='on',sts=fd.getAll('st');
+    if(!all&&!sts.length){toast('Elegí al menos una alumna o marcá "Todas".');return}
+    if(fd.get('end')<=fd.get('start')){toast('La hora de fin tiene que ser posterior a la de inicio.');return}
+    state.slots.push({id:nid('c'),day:fd.get('day'),start:fd.get('start'),end:fd.get('end'),title:fd.get('title').trim(),all,students:all?[]:sts});
+    const ids=all?active().map(s=>s.id):sts;notifyUpdate(ids,'calendario');save();
+    toast(`Horario agregado. Aviso enviado a ${ids.length} ${ids.length===1?'alumna':'alumnas'}.`);
+  }
+  if(k==='password'){
+    const cur=fd.get('current'),nx=fd.get('next'),cf=fd.get('confirm');
+    const acc=session.role==='admin'?state.admin:stu(session.id);
+    if(cur!==acc.pass){toast('La contraseña actual no es correcta.');return}
+    if(nx.length<8){toast('La contraseña nueva tiene que tener al menos 8 caracteres.');return}
+    if(nx!==cf){toast('Las dos contraseñas nuevas no coinciden.');return}
+    if(nx===cur){toast('La contraseña nueva tiene que ser distinta de la actual.');return}
+    acc.pass=nx;save();toast('Listo, tu contraseña se cambió. Usala la próxima vez que ingreses.');
+  }
+  if(k==='exercise'){
+    const id=f.dataset.id,name=fd.get('name').trim();
+    if(state.exercises.some(x=>x.name.trim().toLowerCase()===name.toLowerCase()&&x.id!==id)){toast('Ya hay un ejercicio con ese nombre.');return}
+    const lines=v=>String(v||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const data={name,zone:fd.get('zone'),muscles:fd.get('muscles').trim(),equipment:fd.get('equipment').trim(),level:fd.get('level'),anim:fd.get('anim')||null,steps:lines(fd.get('steps')),mistakes:lines(fd.get('mistakes'))};
+    let target;
+    if(id){target=state.exercises.find(x=>x.id===id);const old=target.name;Object.assign(target,data);
+      if(old!==name)Object.values(state.routines).forEach(r=>r.days.forEach(d=>d.exercises.forEach(x=>{if(x.name===old)x.name=name})))}
+    else{target={id:nid('e'),...data,media:null};state.exercises.push(target)}
+    if(ui.exMedia!==undefined)target.media=ui.exMedia;
+    ui.exEdit=null;ui.exNew=false;ui.exMedia=undefined;
+    try{localStorage.setItem(KEY,JSON.stringify(state));toast(id?'Ejercicio actualizado.':'Ejercicio agregado a la biblioteca.')}
+    catch(err){target.media=null;save();toast('La animación no entra en el almacenamiento del prototipo. Se guardó el ejercicio sin ella; en la web final no hay este límite.')}
+  }
+  if(k==='payment'){
+    const s=stu(fd.get('studentId'));const amount=+fd.get('amount')||s.fee;
+    state.payments.push({id:nid('p'),studentId:s.id,amount,date:fd.get('date'),method:fd.get('method')});
+    const paidDue=s.nextDue;s.nextDue=addMonth(s.nextDue);s.reminderSentFor=null;
+    sendWA(s.id,'pago',`Hola ${first(s.name)}! Recibimos tu pago de ${money(amount)}. Tu próximo vencimiento es el ${fmtDateLong(s.nextDue)}. ¡Gracias!`);
+    ui.gMonth=monthKey(fd.get('date'));save();toast(`Pago de ${first(s.name)} registrado. Próximo vencimiento: ${fmtDateLong(s.nextDue)}.`);
+  }
+  render();
+});
+render();
+</script>
+
+</body></html>
