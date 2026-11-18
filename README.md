@@ -19,7 +19,4 @@ npm test                # tests automáticos (fechas, WhatsApp, PDF y permisos d
 npm run security:check  # chequeo de seguridad del sitio publicado (solo lecturas)
 ```
 
-`security:check` necesita tres variables: `SITE_URL` (tu dominio), `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-(la anon key es pública, la misma que usa el navegador). Revisa que las páginas privadas pidan sesión, que el cron
-exija su clave, las cabeceras de seguridad, que un visitante anónimo no pueda leer la base y que el registro público
-de cuentas en Supabase esté desactivado.
+
