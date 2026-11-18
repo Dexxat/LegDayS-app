@@ -6,7 +6,7 @@ Web para la entrenadora y sus alumnas: acceso con usuario y contraseña, calenda
 
 ## Qué hace
 
-| Perfil | Funciones |
+| Perfil                  | Funciones
 |---|---|
 | Entrenadora (`/admin`) | Alta y edición de alumnas (usuario, contraseña, WhatsApp, cuota, vencimiento). Calendario semanal. Editor de rutinas y dietas, con opción de aplicar el mismo cambio a varias alumnas. Biblioteca de ejercicios: nombre, zona, músculos, equipo, nivel, técnica paso a paso, errores comunes y animación. Ganancias: pagos por mes, esperado vs. cobrado, gráfico de 6 meses, exportación a CSV. Historial de avisos. |
 | Alumna (`/mi-panel`)   | Sus horarios, rutina, dieta y estado de cuota. Sector **Ejercicios** con buscador, filtro por zona y ficha de cada ejercicio con su animación; desde la rutina abre la ficha con “Ver técnica y animación”. Descarga de PDF: rutina, dieta o ambos. Marca “nuevo” cuando la entrenadora actualiza algo. |
